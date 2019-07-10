@@ -13,14 +13,15 @@ GitRecuter can find other developers who have similar coding skills to the one t
 * Fork
 * Push
 
-Based on these type of actions that users has with eachother, the GitRecruier would estimate their connection and return top 9 coders that are related to that specific user the recruiter knows.
+Based on these type of actions that users has with eachother, the GitRecruier would estimate their connection and return top 10 coders that are related to that specific user the recruiter knows.
 
 ## ETL Pipeline
 
 GitHub historic data is saved in an Amazon S3 bucket. Then an offline batch processing Apache Spark job reads and processes the data and save it in a PostgreSQL database. The user facing component of this pipeline is the Dahs application. User can enter the github username of a developer and the application will make query to the database . The results willbe shown in the format of table by using Dash.
 
+
 ## User Interface
-Link to [GitRecruier application](www.dataprocess.xyz).
+Link to [GitRecruier application](https://gitrecruiter.herokuapp.com/).
 ## Installation
 Things are need to be installed
 * Apache Spark

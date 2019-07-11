@@ -14,22 +14,44 @@ from pyspark.sql import SparkSession
 import os
 os.environ['PYSPARK_SUBMIT_ARGS'] = '--packages org.postgresql:postgresql:42.2.5 pyspark-shell'
 
-spark = SparkSession.builder.master("spark://ec2-3-215-129-181.compute-1.amazonaws.com:7077").appName("My Spark Application").config("spark.submit.deployMode", "client").getOrCreate()
-
 import sys
-json_path = sys.argv[1] # the path to the input json files
+try:
+    spark = SparkSession.builder.master("spark://ec2-3-215-129-181.compute-1.amazonaws.com:7077").appName("My Spark Application").config("spark.submit.deployMode", "client").getOrCreate()
+except:
+    print("Make sure the spark server is running!")
+    sys.exit(1)
+    
+try:
+    json_path = sys.argv[1] # the path to the input json files
+except:
+    print("Pass the input json file as an argument!")
+    sys.exit(1)
 
 # @desc     selects the required fields from the input json file
 # @param    input json file
 # @return   dataframe - action information, dataframe - actor information     
 def read_jason(path):
-    df = spark.read.json(path)
-    
+
+    try:
+        df = spark.read.json(path)
+    except:
+        print("Can't find the input file")
+        sys.exit(1)
+
     # actor information: id, username, url
-    actor_df = df.select(df['actor.id'].alias('actor_id'), df['actor.login'].alias('login_username'), df['actor.url'].alias('url')).groupBy('actor_id', 'login_username', 'url').count()
+    try:
+        actor_df = df.select(df['actor.id'].alias('actor_id'), df['actor.login'].alias('login_username'), df['actor.url'].alias('url')).groupBy('actor_id', 'login_username', 'url').count()
+    except:
+        print("Wrong file format!")
+        sys.exit(1)
 
     # action information: type (Create, Push, Fork), actor_id, repo_id
-    action_df = df.select(df['type'], df['actor.id'].alias('actor_id'), df['repo.id'].alias('repo_id')).filter((df['type']=="CreateEvent") | (df['type']=="PushEvent") | (df['type']=="ForkEvent") )
+    try:
+        action_df = df.select(df['type'], df['actor.id'].alias('actor_id'), df['repo.id'].alias('repo_id')).filter((df['type']=="CreateEvent") | (df['type']=="PushEvent") | (df['type']=="ForkEvent") )
+    except:
+        print("Wrong file format!")
+        sys.exit(1)
+
     return [action_df, actor_df]
 
 
@@ -90,7 +112,12 @@ def calculate_score_tuple(df_row):
 def write_to_DB(df, table, mode):
     url = "jdbc:postgresql://database-git.cq4qxi57fodj.us-east-1.rds.amazonaws.com/postgres"
     properties = {"user": "postgres", "password": "postgres", "driver": "org.postgresql.Driver"}
-    df.write.jdbc(url=url, table=table, mode=mode, properties=properties)
+
+    try:
+        df.write.jdbc(url=url, table=table, mode=mode, properties=properties)
+    except:
+        print("Make sure the database server is running!")
+        sys.exit(1)
 
 
 import time
@@ -108,4 +135,3 @@ write_to_DB(final_df, 'user_score', 'overwrite')
 
 finish_ts = time.time() # finish timestamp
 print(finish_ts-start_ts) # print the execution time
-
